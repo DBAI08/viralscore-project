@@ -185,13 +185,19 @@ function createVideoCard(video){
     options:{responsive:true,plugins:{legend:{labels:{color:'#c0c0c0'}}}}
   });
 
-  const trendData = Array.from({length:7},()=>Math.floor(Math.random()*100));
   const lineChart = new Chart(lineCanvas, {
     type:'line',
-    data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-          datasets:[{label:'Views Trend',data:trendData,
-          borderColor:'#00ff7f',backgroundColor:'rgba(0,255,127,0.2)',
-          tension:0.4,fill:true}]},
+    data:{
+      labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets:[{
+        label:'Views Trend',
+        data:Array.from({length:7},()=>Math.floor(Math.random()*100)),
+        borderColor:'#00ff7f',
+        backgroundColor:'rgba(0,255,127,0.2)',
+        tension:0.4,
+        fill:true
+      }]
+    },
     options:{responsive:true,
       plugins:{legend:{labels:{color:'#c0c0c0'}}},
       scales:{x:{ticks:{color:'#c0c0c0'}},y:{ticks:{color:'#c0c0c0'}}}
@@ -201,8 +207,7 @@ function createVideoCard(video){
   card.updateCharts = function(newData){
     doughnutChart.data.datasets[0].data = [newData.likes,newData.shares,newData.comments];
     doughnutChart.update();
-    const newTrend = Array.from({length:7},()=>Math.floor(Math.random()*100));
-    lineChart.data.datasets[0].data = newTrend;
+    lineChart.data.datasets[0].data = Array.from({length:7},()=>Math.floor(Math.random()*100));
     lineChart.update();
   }
 
@@ -215,7 +220,7 @@ const leaderboard = document.getElementById('leaderboard-list');
 
 async function fetchViralScores() {
   try {
-    const res = await fetch("https://viralscore-project.onrender.com/api/viral_scores");
+    const res = await fetch("https://viralscore-project.onrender.com/api/viral_scores")
     return await res.json();
   } catch (err) {
     console.error('Failed to fetch viral scores:', err);
@@ -233,10 +238,7 @@ async function loadDashboard() {
   // Top 3
   const top3 = videos.slice(0,3);
   top3.forEach((v,i)=>{
-    // Animate score smoothly
-    animateValue(document.getElementById(`top${i+1}-score`),
-                 parseInt(document.getElementById(`top${i+1}-score`).textContent),
-                 v.score, 800);
+    document.getElementById(`top${i+1}-score`).textContent = v.score;
     document.querySelectorAll('.top-card')[i].querySelector('h2').textContent = ['🥇','🥈','🥉'][i] + ' ' + v.title;
   });
 
@@ -251,28 +253,12 @@ async function loadDashboard() {
   });
 
   // Video cards
-  // Keep existing cards and update charts if already created
-  const existingCards = videoCardsContainer.querySelectorAll('.video-card');
-  videos.forEach((video,i)=>{
-    if(existingCards[i]){
-      existingCards[i].updateCharts(video);
-    } else {
-      const card = createVideoCard(video);
-      videoCardsContainer.appendChild(card);
-    }
+  videoCardsContainer.innerHTML='';
+  videos.forEach(video=>{
+    const card = createVideoCard(video);
+    card.updateCharts(video);
+    videoCardsContainer.appendChild(card);
   });
-}
-
-// --- Smooth counter ---
-function animateValue(element, start, end, duration = 800) {
-  let startTime = null;
-  function step(currentTime) {
-    if(!startTime) startTime = currentTime;
-    const progress = Math.min((currentTime - startTime)/duration,1);
-    element.textContent = Math.floor(progress*(end-start)+start);
-    if(progress<1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 
 // --- Auto-refresh ---
