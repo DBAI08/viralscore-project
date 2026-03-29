@@ -158,18 +158,6 @@ function createParticles(count=30){
 }
 createParticles();
 
-// --- Smooth counter ---
-function animateValue(element, start, end, duration = 1000) {
-  let startTime = null;
-  function step(currentTime) {
-    if(!startTime) startTime = currentTime;
-    const progress = Math.min((currentTime - startTime)/duration,1);
-    element.textContent = Math.floor(progress*(end-start)+start);
-    if(progress<1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
 // --- Video card creation ---
 function createVideoCard(video){
   const card = document.createElement('div');
@@ -227,7 +215,7 @@ const leaderboard = document.getElementById('leaderboard-list');
 
 async function fetchViralScores() {
   try {
-    const res = await fetch('http://127.0.0.1:8080/api/viral_scores');
+    const res = await fetch("https://viralscore-project.onrender.com/api/viral_scores");
     return await res.json();
   } catch (err) {
     console.error('Failed to fetch viral scores:', err);
@@ -245,7 +233,10 @@ async function loadDashboard() {
   // Top 3
   const top3 = videos.slice(0,3);
   top3.forEach((v,i)=>{
-    document.getElementById(`top${i+1}-score`).textContent = v.score;
+    // Animate score smoothly
+    animateValue(document.getElementById(`top${i+1}-score`),
+                 parseInt(document.getElementById(`top${i+1}-score`).textContent),
+                 v.score, 800);
     document.querySelectorAll('.top-card')[i].querySelector('h2').textContent = ['🥇','🥈','🥉'][i] + ' ' + v.title;
   });
 
@@ -260,17 +251,33 @@ async function loadDashboard() {
   });
 
   // Video cards
-  videoCardsContainer.innerHTML='';
-  videos.forEach(video=>{
-    const card = createVideoCard(video);
-    videoCardsContainer.appendChild(card);
+  // Keep existing cards and update charts if already created
+  const existingCards = videoCardsContainer.querySelectorAll('.video-card');
+  videos.forEach((video,i)=>{
+    if(existingCards[i]){
+      existingCards[i].updateCharts(video);
+    } else {
+      const card = createVideoCard(video);
+      videoCardsContainer.appendChild(card);
+    }
   });
+}
+
+// --- Smooth counter ---
+function animateValue(element, start, end, duration = 800) {
+  let startTime = null;
+  function step(currentTime) {
+    if(!startTime) startTime = currentTime;
+    const progress = Math.min((currentTime - startTime)/duration,1);
+    element.textContent = Math.floor(progress*(end-start)+start);
+    if(progress<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 // --- Auto-refresh ---
 loadDashboard();
 setInterval(loadDashboard,10000);
-
 </script>
 </body>
 </html>
