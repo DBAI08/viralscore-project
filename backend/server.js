@@ -2,13 +2,12 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
 
-// Sample viral scores data
+// Initial static video list
 let viralScores = [
   { video_id: "vid001", title: "Funny Cat Video", likes: 50, shares: 20, comments: 10, score: 120 },
   { video_id: "vid002", title: "Epic Fail Compilation", likes: 80, shares: 30, comments: 15, score: 110 },
@@ -17,18 +16,19 @@ let viralScores = [
   { video_id: "vid005", title: "Cooking Tutorial", likes: 60, shares: 15, comments: 8, score: 76 },
 ];
 
-// API endpoint with simulated live updates
+// API endpoint: randomizes numbers for “live” effect
 app.get('/api/viral_scores', (req, res) => {
-  viralScores = viralScores.map(video => ({
-    ...video,
-    likes: Math.floor(Math.random() * 100),
-    shares: Math.floor(Math.random() * 50),
-    comments: Math.floor(Math.random() * 30),
-    score: Math.floor(Math.random() * 150 + 50)
-  }));
-  res.json(viralScores);
+  const liveScores = viralScores.map(v => {
+    const likes = Math.floor(Math.random() * 100);
+    const shares = Math.floor(Math.random() * 50);
+    const comments = Math.floor(Math.random() * 30);
+    const score = likes + shares * 2 + comments * 3; // simple weighted formula
+    return { ...v, likes, shares, comments, score };
+  });
+  res.json(liveScores);
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
